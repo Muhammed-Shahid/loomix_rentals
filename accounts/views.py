@@ -158,7 +158,7 @@ def edit_user(request):
 def get_verification_otp(request):
     if request.method == "GET":
         phone = request.GET.get("phone")
-        phone = f"+91 {phone}"
+        phone = f"+91{phone}"
 
         print("phone get", phone)
 

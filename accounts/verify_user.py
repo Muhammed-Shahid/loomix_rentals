@@ -2,8 +2,8 @@ import os
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
-client = Client(os.environ['TWILIO_ACCOUNT_SID'], os.environ['TWILIO_AUTH_TOKEN'])
-verify = client.verify.services(os.environ['TWILIO_VERIFY_SERVICE_SID'])
+client = Client('AC164f638f23be0e3178eff57f5f18859c', '828e643ecfe1b7020c155af8e1b48a74')
+verify = client.verify.services('VAe4811856937bdb8d6bbf3f3f911929ca')
 
 
 def send(phone):
