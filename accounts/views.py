@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import authentication_classes, permission_classes
 from .serializers import UserSerializer, AddressSerializer
-
+import json
 
 # Create your views here.
 class LogoutView(APIView):
@@ -93,27 +93,27 @@ class Address_View(APIView):
 @api_view(["POST"])
 def create_user(request):
     if request.method == "POST":
-        data = request.POST
-
+        data = json.loads(request.body.decode('utf-8'))
+        print('data bulu : ',data)
         new_user = CustomUser.objects.create_user(
-            first_name=data["firstName"],
-            last_name=data["lastName"],
-            email=data["email"],
-            phone=data["phone"],
-            password=data["password"],
+            first_name = data.get('firstName'),
+            last_name = data.get('lastName'),
+            email = data.get('email'),
+            phone = data.get('phone'),
+            password = data.get('password'),
             is_verified=True,
         )
 
         new_user_address = Address.objects.create(
             user=new_user,
-            license=data["license"],
-            house_name=data["house"],
-            street=data["street"],
-            place=data["place"],
-            city=data["city"],
-            state=data["state"],
-            postal_code=data["zip_code"],
-            land_mark=data["landmark"],
+            license = data.get("license"),
+            house_name = data.get("house"),
+            street = data.get("street"),
+            place = data.get("place"),
+            city = data.get("city"),
+            state = data.get("state"),
+            postal_code = data.get("zip_code"),
+            land_mark = data.get("landmark"),
             default_address=True
         )
         new_user.save()
@@ -171,7 +171,7 @@ def get_verification_otp(request):
         return JsonResponse(response_data)
 
     if request.method == "POST":
-        data = request.POST
+        data = json.loads(request.body.decode('utf-8'))["post_data"]
         code = data["code"]
         phone = data["phone"]
         phone = f"+91 {phone}"
