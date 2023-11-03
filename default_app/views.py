@@ -4,26 +4,27 @@ import json
 import razorpay
 
 env = os.environ
-from accounts.Order_Status import PaymentStatus
 from datetime import datetime
 from django.db.models import Q
 from rest_framework import status
 from django.db.models import Count
 from django.shortcuts import render
 from django.http import JsonResponse
-from rest_framework.views import APIView
 from rest_framework import serializers
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models.functions import ExtractMonth
-from accounts.models import Listed_Vehicles, CustomUser, Order_Details, Address
-from accounts.serializers import ListVehicleSerializer, OrderSerializer
-from rest_framework.parsers import MultiPartParser, FormParser
-from default_app.models import Cart_Items, VehicleRating, Whishlist, Coupon
+from rest_framework.views import APIView
+from .serializers import Review_serializer
 from django.core.paginator import Paginator
+from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from accounts.Order_Status import PaymentStatus
+from django.db.models.functions import ExtractMonth
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from accounts.serializers import ListVehicleSerializer, OrderSerializer
+from default_app.models import Cart_Items, VehicleRating, Whishlist, Coupon
+from accounts.models import Listed_Vehicles, CustomUser, Order_Details, Address
 from rest_framework.decorators import authentication_classes, permission_classes
 
 
@@ -141,6 +142,7 @@ class VehicleView(APIView):
         discount = request.data.get("discount")
         vehicle_id = request.data.get("vehicle_id")
         print("request.post", request.data)
+
         if discount:
             vehicle = Listed_Vehicles.objects.get(id=vehicle_id)
             vehicle.discount = discount
@@ -591,10 +593,9 @@ class Vehicle_Rating(APIView):
 
     def post(self, request):
         data = request.data["params"]
-        vehicle_id = data["vehicle_id"]
-        rating = data["rating"]
-        comment = data["comment"]
-
+        vehicle_id = data["ratingVehicle"]
+        rating = data["starValue"]
+        comment = data["reviewTxt"]
         if rating is not None:
             rating = int(rating)
 
@@ -602,17 +603,32 @@ class Vehicle_Rating(APIView):
         user = CustomUser.objects.get(id=user_id)
         vehicle = Listed_Vehicles.objects.get(id=vehicle_id)
 
+        username = user.first_name + " " + user.last_name
+
         new_rating = VehicleRating.objects.create(
-            user=user, vehicle=vehicle, rating=rating, comment=comment
+            user=user,
+            username=username,
+            vehicle=vehicle,
+            rating=rating,
+            comment=comment,
         )
         new_rating.save()
 
         return Response(status=status.HTTP_200_OK)
 
     def get(self, request):
-        vehicle_id = request.Get.get("vehicle_id")
+        vehicle_id = request.GET.get("vehicle_id")
+
         vehicle = Listed_Vehicles.objects.get(id=vehicle_id)
 
-        rating = VehicleRating.objects.filter(vehicle=vehicle)
+        ratings = VehicleRating.objects.filter(vehicle=vehicle)
 
-        return Response(rating)
+        ratings = Review_serializer(ratings, many=True)
+
+        if ratings:
+            response_data = {"reviews": ratings.data, "status": status.HTTP_200_OK}
+
+            return Response(response_data)
+
+        response_data = {"status": status.HTTP_204_NO_CONTENT}
+        return Response(response_data)

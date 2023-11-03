@@ -1,19 +1,18 @@
 from rest_framework import serializers
 from accounts.models import Listed_Vehicles
-from accounts.models import CustomUser,Address,Order_Details
+from accounts.models import CustomUser, Address, Order_Details
+
 
 class ListVehicleSerializer(serializers.ModelSerializer):
-
- 
-
     class Meta:
         model = Listed_Vehicles
-        fields = '__all__'
+        fields = "__all__"
+
 
 class ListedVehiclesImageSerializer(serializers.ModelSerializer):
     class Meta:
-        model=Listed_Vehicles
-        fields=('')
+        model = Listed_Vehicles
+        fields = ""
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,13 +24,13 @@ class UserSerializer(serializers.ModelSerializer):
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
-        exclude=['user']
+        exclude = ["user"]
 
     def create(self, validated_data):
-        user = self.context['request'].user  # Get the current user from the request
+        user = self.context["request"].user  # Get the current user from the request
 
         # Add the user to the validated data
-        validated_data['user'] = user
+        validated_data["user"] = user
         return Address.objects.create(**validated_data)
 
 

@@ -5,6 +5,7 @@ from accounts.models import CustomUser ,Listed_Vehicles
 class VehicleRating(models.Model):
     vehicle = models.ForeignKey(Listed_Vehicles, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  
+    username=models.CharField(max_length=125,null=True,blank=True)
     comment=models.CharField(max_length=355,null=True,blank=True)
     rating = models.IntegerField()  
 
