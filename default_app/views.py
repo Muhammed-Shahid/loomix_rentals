@@ -296,8 +296,10 @@ class Manage_orders(APIView):
         gateway_payment = request.data.get("payment_method")
         coupon_discount = int(request.data.get("coupon_discount"))
         print("gateway: ", gateway_payment)
-
+         
         final_amount = int(request.data.get("checkoutAmount"))
+        if coupon_discount and coupon_discount > 0:
+            final_amount=final_amount-coupon_discount
 
         customer = CustomUser.objects.get(id=current_user_id)
 
@@ -337,7 +339,7 @@ class Manage_orders(APIView):
                 seller_id = product.owner_id
                 seller = CustomUser.objects.get(id=seller_id)
 
-                new_order = Order_Details.objects.create(  # latest bug..payment is accepted but order not created //solved
+                new_order = Order_Details.objects.create(  
                     product=product_id,
                     customer=customer,
                     order_date=current_dateTime,

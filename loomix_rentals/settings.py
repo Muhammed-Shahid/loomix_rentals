@@ -52,7 +52,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://loomix.in",
     "https://loomix.in",
-    "http:www.loomix.in",
+    "http://www.loomix.in",
     "https://www.loomix.in",
     "http://loomix-rentals.netlify.app",
     "https://loomix-rentals.netlify.app",
