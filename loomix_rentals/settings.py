@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-^_z(g(vo!@+rvpfq@2#_0rnq9umlkm#=ujjn+zqgqa_sw4hsn3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['13.232.26.226','127.0.0.1','localhost','0.0.0.0']
+ALLOWED_HOSTS = ["13.232.26.226", "127.0.0.1", "localhost", "0.0.0.0",'3.111.221.228']
 
 
 # Application definition
@@ -50,11 +50,24 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    #   'http://13.232.26.226:80'  # Add your front-end domain here
+    "http://loomix.in",
+    "https://loomix.in",
+    "http:www.loomix.in",
+    "https://www.loomix.in",
+    "http://loomix-rentals.netlify.app",
+    "https://loomix-rentals.netlify.app",
+    "http://3.111.221.228",
+    "http://13.232.26.226:80",  # Add your front-end domain here
 ]
 
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://loomix.in",
+    "http://www.loomix.in",
+    "https://loomix.in",
+    "https://www.loomix.in",
+]
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
