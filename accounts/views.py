@@ -82,10 +82,30 @@ class Address_View(APIView):
     
 
     def patch(self,request):
-        pass
+    
+        data=request.data
+        address_id=data['address_id']
+        address_data=data['address_data']
+        print('data',address_data)
+        print('address id',address_id)
+        EditableAddress=Address.objects.get(id=address_id)
+
+        EditableAddress.house_name=address_data['house_name']
+        EditableAddress.street=address_data['street']
+        EditableAddress.place=address_data['place']
+        EditableAddress.city=address_data['city']
+        EditableAddress.state=address_data['state']
+        EditableAddress.postal_code=address_data['postal_code']
+        EditableAddress.land_mark=address_data['land_mark']
+        EditableAddress.phone=address_data['phone']
+
+        EditableAddress.save()
+        
+        return Response(status=status.HTTP_200_OK)
 
     def put(self,request):
         pass
+        
 
     
 
