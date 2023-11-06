@@ -1,16 +1,17 @@
+import json
 from . import verify_user
+from django.db.models import Q
 from rest_framework import status
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from accounts.models import CustomUser, Address
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import UserSerializer, AddressSerializer
+from accounts.models import CustomUser, Address,Order_Details
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import authentication_classes, permission_classes
-from .serializers import UserSerializer, AddressSerializer
-import json
 
 # Create your views here.
 class LogoutView(APIView):
@@ -104,9 +105,18 @@ class Address_View(APIView):
         return Response(status=status.HTTP_200_OK)
 
     def put(self,request):
-        pass
+        address_id=request.data['address_id']
+        print('address id',address_id)
         
-
+        incomplete_orders=Order_Details.objects.filter(Q(shipping_address_id=address_id) & ~Q(order_status='Delivered'))
+        
+        print(incomplete_orders)
+        if incomplete_orders:
+            return Response(status=status.HTTP_226_IM_USED)
+        
+        address=Address.objects.get(id=address_id)
+        address.delete()
+        return Response(status=status.HTTP_200_OK)
     
 
 
