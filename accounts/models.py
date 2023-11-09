@@ -12,8 +12,6 @@ from .Order_Status import PaymentStatus
 from django.core.validators import MinValueValidator
 
 
-
-
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -45,7 +43,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     is_blocked = models.BooleanField(default=False)
-    wallet_cash= models.IntegerField(validators=[MinValueValidator(0)], default=0)
+    wallet_cash = models.IntegerField(validators=[MinValueValidator(0)], default=0)
     # Change the related_name to avoid clash
     groups = models.ManyToManyField(Group, blank=True, related_name="custom_users")
     user_permissions = models.ManyToManyField(
@@ -62,20 +60,24 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     # def __str__(self):
     #     return self.email
+
+
 class Address(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    license = models.CharField(max_length=50,null=True,blank=True)
+    license = models.CharField(max_length=50, null=True, blank=True)
     house_name = models.CharField(max_length=255)
     street = models.CharField(max_length=255)
     place = models.CharField(max_length=100)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
     postal_code = models.CharField(max_length=20)
-    phone=models.CharField(max_length=15,null=True,blank=True)
+    phone = models.CharField(max_length=15, null=True, blank=True)
     land_mark = models.CharField(max_length=255, blank=True, null=True)
-    default_address=models.BooleanField(default=False)
+    default_address = models.BooleanField(default=False)
+
     def __str__(self):
         return f"{self.house_name}, {self.city}, {self.state} {self.postal_code}, {self.city}"
+
 
 class Listed_Vehicles(models.Model):
     vehicle_number = models.CharField(max_length=20)
@@ -96,7 +98,10 @@ class Listed_Vehicles(models.Model):
     exterior_image = models.ImageField(upload_to="vehicle_images")
     interior_image = models.ImageField(upload_to="vehicle_images")
     blocked = models.BooleanField(default=False)
-    discount=models.IntegerField(null=True,blank=True)
+    discount = models.IntegerField(null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
+    owner_blocked = models.BooleanField(default=False)
+    rejection_cause = models.CharField(max_length=255,null=True,blank=True)
 
 
 class Order_Details(models.Model):
@@ -109,7 +114,7 @@ class Order_Details(models.Model):
         null=True,
         blank=True,
     )
-    shipping_address=models.ForeignKey(Address,on_delete=models.PROTECT)
+    shipping_address = models.ForeignKey(Address, on_delete=models.PROTECT)
     payment_status = models.CharField(default=PaymentStatus.PENDING, max_length=250)
     order_date = models.DateTimeField()
     deliver_date = models.DateField()

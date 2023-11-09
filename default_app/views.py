@@ -67,7 +67,7 @@ class VehicleView(APIView):
         current_user_id = request.user.id
 
         vehicles = Listed_Vehicles.objects.exclude(
-            Q(owner=current_user_id) | Q(blocked=True)
+            Q(owner=current_user_id) | Q(blocked=True) | Q(owner_blocked=True) | Q(is_verified=False)
         )
 
         if location:
