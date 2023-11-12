@@ -624,8 +624,9 @@ class Manage_Coupons(APIView):
             coupon_discount=coupon_discount,
             coupon_code=coupon_code,
         )
+        print('coupon_data : ',data)
         new_coupon.save()
-
+        print('coupon_created')
         return Response(status=status.HTTP_201_CREATED)
 
     def get(self, request):
