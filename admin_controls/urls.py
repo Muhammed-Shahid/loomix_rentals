@@ -5,6 +5,8 @@ urlpatterns = [
       path('all_vehicles/', views.get_all_vehicles, name ='all_vehicles'),
       path('manage_vehicles/', views.manage_vehicles, name ='manage_vehicles'),
       path('manage_user/', views.manage_user, name ='manage_user'),
+      path('view_coupons/', views.view_coupons, name ='view_coupons'),
+
       
       ]
       

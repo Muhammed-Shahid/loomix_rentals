@@ -11,5 +11,5 @@ urlpatterns = [
     path("user_liked/", views.get_user_liked, name="user_liked"),
     path("manage_order/", views.Manage_orders.as_view(), name="user_liked"),
     path("vehicle_rating/", views.Vehicle_Rating.as_view(), name="vehicle_rating"),
-    path("payment/success/", views.handle_payment_success, name="payment_success"),
+    path("payment_success/", views.handle_payment_success, name="payment_success"),
 ]

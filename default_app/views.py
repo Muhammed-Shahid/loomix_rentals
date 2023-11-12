@@ -13,7 +13,6 @@ from django.http import JsonResponse
 from rest_framework import serializers
 from rest_framework.views import APIView
 from .serializers import Review_serializer
-from django.core.paginator import Paginator
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from accounts.Order_Status import PaymentStatus
@@ -22,7 +21,12 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from accounts.serializers import ListVehicleSerializer, OrderSerializer
+from accounts.serializers import (
+    ListVehicleSerializer,
+    OrderSerializer,
+    AddressSerializer,
+)
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from default_app.models import Cart_Items, VehicleRating, Whishlist, Coupon
 from accounts.models import Listed_Vehicles, CustomUser, Order_Details, Address
 from rest_framework.decorators import authentication_classes, permission_classes
@@ -65,9 +69,12 @@ class VehicleView(APIView):
 
         print("price range", price_range)
         current_user_id = request.user.id
-
+        user = CustomUser.objects.get(id=current_user_id)
         vehicles = Listed_Vehicles.objects.exclude(
-            Q(owner=current_user_id) | Q(blocked=True) | Q(owner_blocked=True) | Q(is_verified=False)
+            Q(owner=current_user_id)
+            | Q(blocked=True)
+            | Q(owner_blocked=True)
+            | Q(is_verified=False)
         )
 
         if location:
@@ -95,8 +102,12 @@ class VehicleView(APIView):
         if price_range:
             vehicles = vehicles.filter(price__lte=price_range)
 
+        user_is_owner = False
         if vehicle_id:
             vehicles = Listed_Vehicles.objects.filter(id=vehicle_id)
+            for vehicle in vehicles:
+                if vehicle.owner == user:
+                    user_is_owner = True
 
         if user_specific:
             print(user_specific)
@@ -105,14 +116,14 @@ class VehicleView(APIView):
 
         serializer = ListVehicleSerializer(vehicles, many=True)
 
-        # paginator = Paginator(serializer.data, 8)
-        makes = Listed_Vehicles.objects.values_list("make", flat=True)
-        locations = Listed_Vehicles.objects.values_list("place", flat=True)
+        makes = Listed_Vehicles.objects.values_list("make", flat=True).distinct()
+        locations = Listed_Vehicles.objects.values_list("place", flat=True).distinct()
 
         response_data = {
             "vehicles": serializer.data,
             "makes": list(makes),
             "locations": list(locations),
+            "user_is_owner": user_is_owner,
         }
 
         return Response(response_data)
@@ -123,11 +134,9 @@ class VehicleView(APIView):
         if vehicle_serializer.is_valid():
             vehicle_serializer.save()
             return Response(vehicle_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            print("error", vehicle_serializer.errors)
-            return Response(
-                vehicle_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
+
+        print("error", vehicle_serializer.errors)
+        return Response(vehicle_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request):
         vehicle_id = request.POST["vehicle_id"]
@@ -296,10 +305,10 @@ class Manage_orders(APIView):
         gateway_payment = request.data.get("payment_method")
         coupon_discount = int(request.data.get("coupon_discount"))
         print("gateway: ", gateway_payment)
-         
+
         final_amount = int(request.data.get("checkoutAmount"))
         if coupon_discount and coupon_discount > 0:
-            final_amount=final_amount-coupon_discount
+            final_amount = final_amount - coupon_discount
 
         customer = CustomUser.objects.get(id=current_user_id)
 
@@ -339,7 +348,7 @@ class Manage_orders(APIView):
                 seller_id = product.owner_id
                 seller = CustomUser.objects.get(id=seller_id)
 
-                new_order = Order_Details.objects.create(  
+                new_order = Order_Details.objects.create(
                     product=product_id,
                     customer=customer,
                     order_date=current_dateTime,
@@ -374,10 +383,43 @@ class Manage_orders(APIView):
     def get(self, request):
         seller_specific = request.GET.get("seller_specific")
         sales_report_period = request.GET.get("sales_report_period")
+        request_order_id = request.GET.get("order_id")
+        page = request.GET.get("page", 1)
+        items_per_page = request.GET.get("items_per_page", 10)
 
         current_user_id = request.user.id
 
         current_user = CustomUser.objects.get(id=current_user_id)
+
+        if request_order_id:
+            orders = Order_Details.objects.get(id=request_order_id)
+            product_id = orders.product
+            order_status = orders.order_status
+            shipping_address = orders.shipping_address
+            orders = OrderSerializer(orders)
+
+            product = Listed_Vehicles.objects.get(id=product_id)
+            products = ListVehicleSerializer(product)
+
+            shipping_address = AddressSerializer(shipping_address)
+            order_status_numeric = ""
+            if order_status == "Cancelled":
+                order_status_numeric = 0
+            if order_status == "Processing":
+                order_status_numeric = 25
+            elif order_status == "Shipping":
+                order_status_numeric = 50
+            elif order_status == "Delivered":
+                order_status_numeric = 100
+
+            print(order_status_numeric)
+            response_data = {
+                "orders": orders.data,
+                "products": products.data,
+                "order_status": order_status_numeric,
+                "shipping_address": shipping_address.data,
+            }
+            return Response(response_data)
 
         if seller_specific:
             orders = Order_Details.objects.filter(seller_id=current_user.id)
@@ -435,9 +477,22 @@ class Manage_orders(APIView):
 
         else:
             orders = Order_Details.objects.filter(customer=current_user)
+            total_orders = orders.count()
 
-        product_id = orders.values_list("product", flat=True)
-        order_status = orders.values_list("order_status", flat=True)
+            # Paginator instance
+            paginator = Paginator(orders, items_per_page)
+            try:
+                # Get the Page object for the given page
+                orders = paginator.page(page)
+            except PageNotAnInteger:
+                # If the page parameter is not an integer, show the first page
+                orders = paginator.page(1)
+            except EmptyPage:
+                # If the page is out of range, deliver the last page
+                orders = paginator.page(paginator.num_pages)
+
+        product_id = orders.object_list.values_list("product", flat=True)
+        order_status = orders.object_list.values_list("order_status", flat=True)
         orders = OrderSerializer(orders, many=True)
 
         products = []
@@ -464,6 +519,7 @@ class Manage_orders(APIView):
             "orders": orders.data,
             "products": products.data,
             "order_status": order_status_numeric,
+            "total_orders": total_orders,
         }
         return Response(response_data)
 
@@ -573,6 +629,7 @@ class Manage_Coupons(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
     def get(self, request):
+    
         coupon_code = request.GET.get("coupon_code")
         price = int(request.GET.get("price"))
 

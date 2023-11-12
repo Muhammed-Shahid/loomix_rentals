@@ -5,6 +5,8 @@ from django.db.models import Count
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.http import JsonResponse
+from default_app.models import Coupon
+from default_app.serializers import Coupon_Serializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from accounts.models import CustomUser, Listed_Vehicles
@@ -110,3 +112,19 @@ def manage_user(request):
 
         return Response("Success")
     return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+
+@authentication_classes([JWTAuthentication])
+@permission_classes((IsAuthenticated,))
+@api_view(["GET"])
+def view_coupons(request):
+    
+    all_coupons=Coupon.objects.all()
+
+    all_coupons=Coupon_Serializer(all_coupons,many=True)
+
+    res_data={
+        'coupons':all_coupons.data
+    }
+    return Response(res_data,status=status.HTTP_200_OK)
