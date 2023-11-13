@@ -615,6 +615,7 @@ class Manage_Coupons(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
+      
         data = request.data["params"]
         min_price = data["min_price"]
         coupon_discount = data["coupon_discount"]
@@ -646,6 +647,15 @@ class Manage_Coupons(APIView):
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
         except Coupon.DoesNotExist:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+        
+    def put(self,request):
+        coupon_id=request.data['coupon_id']
+
+        coupon=Coupon.objects.get(id=coupon_id)
+        coupon.delete()
+
+        return Response(status=status.HTTP_200_OK)
+        
 
 
 class Vehicle_Rating(APIView):
