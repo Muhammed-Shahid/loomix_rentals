@@ -23,6 +23,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 def get_all_users(request):
     #   vehicles = Listed_Vehicles.objects.annotate(number_of_vehicles=Count('owner'))
     #    print(vehicles)
+    
 
     if request.user.is_superuser:
         all_users = CustomUser.objects.all()

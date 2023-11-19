@@ -63,7 +63,10 @@ class VehicleView(APIView):
         vehicle_id = request.GET.get("vehicle_id")
         search_param = request.GET.get("search_param")
         price_range = request.GET.get("price_range")
-
+        
+        page = request.GET.get("page", 1)
+        items_per_page = request.GET.get("items_per_page", 10)
+        
         if price_range is not None:
             price_range = int(price_range)
 
@@ -75,6 +78,7 @@ class VehicleView(APIView):
             | Q(blocked=True)
             | Q(owner_blocked=True)
             | Q(is_verified=False)
+            | Q(is_deleted=True)
         )
 
         if location:
@@ -114,13 +118,26 @@ class VehicleView(APIView):
             current_user_id = request.user.id
             vehicles = Listed_Vehicles.objects.filter(owner=current_user_id)
 
-        serializer = ListVehicleSerializer(vehicles, many=True)
-
+            paginator = Paginator(vehicles, items_per_page)
+            try:
+                # Get the Page object for the given page
+                vehicles = paginator.page(page)
+            except PageNotAnInteger:
+                # If the page parameter is not an integer, show the first page
+                vehicles = paginator.page(1)
+            except EmptyPage:
+                # If the page is out of range, deliver the last page
+                vehicles = paginator.page(paginator.num_pages)
+ 
+        vehicle_serialized = ListVehicleSerializer(vehicles, many=True)
+        
         makes = Listed_Vehicles.objects.values_list("make", flat=True).distinct()
         locations = Listed_Vehicles.objects.values_list("place", flat=True).distinct()
+       
 
+    
         response_data = {
-            "vehicles": serializer.data,
+            "vehicles": vehicle_serialized.data,
             "makes": list(makes),
             "locations": list(locations),
             "user_is_owner": user_is_owner,
@@ -143,7 +160,9 @@ class VehicleView(APIView):
 
         vehicle = Listed_Vehicles.objects.get(id=vehicle_id)
 
-        vehicle.delete()
+        vehicle.is_deleted=True
+        vehicle.availability=False
+        vehicle.save()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -312,6 +331,9 @@ class Manage_orders(APIView):
 
         customer = CustomUser.objects.get(id=current_user_id)
 
+        if customer.is_blocked ==True:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
         current_dateTime = datetime.now(pytz.timezone("Asia/Kolkata"))
 
         delivery_date = datetime.strptime(delivery_date, "%a, %d %b %Y %H:%M:%S GMT")
@@ -423,6 +445,8 @@ class Manage_orders(APIView):
 
         if seller_specific:
             orders = Order_Details.objects.filter(seller_id=current_user.id)
+            total_orders = orders.count()
+            
         elif sales_report_period:
             year_start = f"{sales_report_period}-01-01"
             year_end = f"{sales_report_period}-12-31"
@@ -491,9 +515,15 @@ class Manage_orders(APIView):
                 # If the page is out of range, deliver the last page
                 orders = paginator.page(paginator.num_pages)
 
-        product_id = orders.object_list.values_list("product", flat=True)
-        order_status = orders.object_list.values_list("order_status", flat=True)
-        orders = OrderSerializer(orders, many=True)
+        
+        if seller_specific:
+            product_id = orders.values_list("product", flat=True)
+            order_status = orders.values_list("order_status", flat=True)
+            orders = OrderSerializer(orders, many=True)
+        else:
+            product_id = orders.object_list.values_list("product", flat=True)
+            order_status = orders.object_list.values_list("order_status", flat=True)
+            orders = OrderSerializer(orders, many=True)
 
         products = []
         for id in product_id:
@@ -515,6 +545,7 @@ class Manage_orders(APIView):
                 order_status_numeric.append(100)
 
         print(order_status_numeric)
+        
         response_data = {
             "orders": orders.data,
             "products": products.data,

@@ -74,7 +74,7 @@ class Address(models.Model):
     phone = models.CharField(max_length=15, null=True, blank=True)
     land_mark = models.CharField(max_length=255, blank=True, null=True)
     default_address = models.BooleanField(default=False)
-
+    is_deleted=models.BooleanField(default=False)
     def __str__(self):
         return f"{self.house_name}, {self.city}, {self.state} {self.postal_code}, {self.city}"
 
@@ -102,6 +102,7 @@ class Listed_Vehicles(models.Model):
     is_verified = models.BooleanField(default=False)
     owner_blocked = models.BooleanField(default=False)
     rejection_cause = models.CharField(max_length=255,null=True,blank=True)
+    is_deleted=models.BooleanField(default=False)
 
 
 class Order_Details(models.Model):

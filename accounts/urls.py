@@ -13,4 +13,5 @@ urlpatterns = [
     path("get_otp/", views.get_verification_otp, name="get_otp"),
     path("logout/", views.LogoutView.as_view(), name="logout"),
     path("edit_user/", views.edit_user, name="edit_user"),
+    path("reset_password/", views.reset_password, name="reset_password"),
 ]
