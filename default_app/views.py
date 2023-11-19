@@ -31,7 +31,8 @@ from default_app.models import Cart_Items, VehicleRating, Whishlist, Coupon
 from accounts.models import Listed_Vehicles, CustomUser, Order_Details, Address
 from rest_framework.decorators import authentication_classes, permission_classes
 
-
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
 class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart_Items
@@ -471,6 +472,8 @@ class Manage_orders(APIView):
                     successfull_orders["order_month"] - 1
                 ] = successfull_orders["order_count"]
 
+
+
             print(
                 "successfull_orders_by_month_count", successfull_orders_by_month_count
             )
@@ -492,10 +495,21 @@ class Manage_orders(APIView):
                 ] = cancelled_orders["order_count"]
 
             print("cancelled_orders_by_month_count", cancelled_orders_by_month_count)
+            
+
+            all_monthly_amounts = Order_Details.objects.annotate(
+            month=ExtractMonth('order_date')).values('month').annotate(total_amount=Sum('amount')).order_by('month')
+            
+            revenue_by_month=[0]*12
+            for monthly_amount in all_monthly_amounts:
+                revenue_by_month[monthly_amount['month']-1]=monthly_amount['total_amount']
+            for entry in all_monthly_amounts:
+                print(f"Month: {entry['month']}, Total Amount: {entry['total_amount']}")
 
             response = {
                 "successfull_orders": successfull_orders_by_month_count,
                 "cancelled_orders": cancelled_orders_by_month_count,
+                'monthly_revenue':revenue_by_month
             }
             return Response(response)
 
