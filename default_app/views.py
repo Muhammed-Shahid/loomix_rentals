@@ -66,7 +66,7 @@ class VehicleView(APIView):
         price_range = request.GET.get("price_range")
         
         page = request.GET.get("page", 1)
-        items_per_page = request.GET.get("items_per_page", 10)
+        items_per_page = request.GET.get("items_per_page", 9)
         
         if price_range is not None:
             price_range = int(price_range)
@@ -118,17 +118,19 @@ class VehicleView(APIView):
             print(user_specific)
             current_user_id = request.user.id
             vehicles = Listed_Vehicles.objects.filter(owner=current_user_id)
-
-            paginator = Paginator(vehicles, items_per_page)
-            try:
-                # Get the Page object for the given page
-                vehicles = paginator.page(page)
-            except PageNotAnInteger:
-                # If the page parameter is not an integer, show the first page
-                vehicles = paginator.page(1)
-            except EmptyPage:
-                # If the page is out of range, deliver the last page
-                vehicles = paginator.page(paginator.num_pages)
+       
+        vehicles_count=vehicles.count()
+       
+        paginator = Paginator(vehicles, items_per_page)
+        try:
+            # Get the Page object for the given page
+            vehicles = paginator.page(page)
+        except PageNotAnInteger:
+            # If the page parameter is not an integer, show the first page
+            vehicles = paginator.page(1)
+        except EmptyPage:
+            # If the page is out of range, deliver the last page
+            vehicles = paginator.page(paginator.num_pages)        
  
         vehicle_serialized = ListVehicleSerializer(vehicles, many=True)
         
@@ -142,6 +144,7 @@ class VehicleView(APIView):
             "makes": list(makes),
             "locations": list(locations),
             "user_is_owner": user_is_owner,
+            'total_vehicles':vehicles_count
         }
 
         return Response(response_data)
