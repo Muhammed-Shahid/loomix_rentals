@@ -1,5 +1,5 @@
 import json
-from django.db.models import F
+from django.db.models import F ,Q
 from rest_framework import status
 from django.db.models import Count
 from django.shortcuts import render
@@ -45,11 +45,11 @@ def get_all_vehicles(request):
         print('data: ',data)
         
         if  data:
-            all_vehicles = Listed_Vehicles.objects.filter(is_verified=False)
+            all_vehicles = Listed_Vehicles.objects.filter(Q(is_verified=False) & Q(is_deleted=False))
             serialized_vehicles = ListVehicleSerializer(all_vehicles, many=True)
             return JsonResponse({"all_vehicles": serialized_vehicles.data})
         
-        all_vehicles = Listed_Vehicles.objects.all()
+        all_vehicles = Listed_Vehicles.objects.filter(is_deleted=False)
         serialized_vehicles = ListVehicleSerializer(all_vehicles, many=True)
         return JsonResponse({"all_vehicles": serialized_vehicles.data})
 
