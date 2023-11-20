@@ -405,7 +405,6 @@ class Manage_orders(APIView):
         payment = client.order.create(data=data)
         data = {"payment": payment}
         return Response(data)
-
     def get(self, request):
         seller_specific = request.GET.get("seller_specific")
         sales_report_period = request.GET.get("sales_report_period")
