@@ -390,7 +390,7 @@ class Manage_orders(APIView):
 
                 product_instance.availability = False
                 product_instance.save()
-        if gateway_payment == "false":
+        if gateway_payment == "wallet":
             wallet_cash = customer.wallet_cash
             print("wallet_cash : ", wallet_cash)
             customer.wallet_cash = wallet_cash - final_amount
