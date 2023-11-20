@@ -96,14 +96,13 @@ class Address_View(APIView):
         user_id = request.user.id
         user = CustomUser.objects.get(id=user_id)
         if data["make_default"] == True:
+            EditableAddress.default_address = True
+            EditableAddress.save()
             current_default_address = Address.objects.get(
                 Q(user=user) & Q(default_address=True)
             )
             current_default_address.default_address = False
             current_default_address.save()
-
-            EditableAddress.default_address = True
-            EditableAddress.save()
             return Response(status=status.HTTP_200_OK)
 
         if data["address_data"]:
